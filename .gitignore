@@ -1,0 +1,8 @@
+﻿node_modules/
+*.local.sql
+*.zip
+.env
+*credentials*.csv
+.worktrees/
+.DS_Store
+Thumbs.db

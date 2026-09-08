@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Clinic Kids — เจ้าหน้าที่</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧸</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px">
+  <div style="background:#fff;border:1px solid var(--border);border-radius:20px;padding:36px 32px;max-width:360px;width:100%;text-align:center;box-shadow:0 8px 30px rgba(45,37,48,.06)">
+    <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(140deg,var(--pink),var(--pink-dark));display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px">🧸</div>
+    <h1 style="font-size:20px;margin-bottom:6px">My Clinic Kids</h1>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:24px">ระบบสำหรับเจ้าหน้าที่คลินิก</div>
+    <button onclick="adminLogin()" style="width:100%;padding:13px;background:var(--pink);color:#fff;border:none;border-radius:12px;font-family:'Sarabun';font-size:15px;font-weight:600;cursor:pointer">เข้าสู่ระบบเจ้าหน้าที่</button>
+    <div id="login-error" style="display:none;margin-top:14px;font-size:12.5px;color:var(--pink-dark)"></div>
+  </div>
+</div>
+
+<!-- ===== APP (hidden until authenticated) ===== -->
+<div id="app-root" style="display:none">
+
+<!-- boot loading overlay (shown while first data loads) -->
+<div id="boot-loading" style="display:none;position:fixed;inset:0;z-index:200;background:var(--paper);align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div class="boot-spin"></div>
+  <div style="font-size:13.5px;color:var(--ink-soft)">กำลังเตรียมข้อมูล…</div>
+</div>
+
+<!-- Status bar: hidden during normal use. Appears only when the API is
+     unreachable, or on every load when opened with ?dev=1 -->
+<div class="statusbar" id="statusbar" hidden></div>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">🧸</div>
+      <div>
+        <div class="brand-name">My Clinic Kids</div>
+        <div class="brand-sub">ระบบเจ้าหน้าที่</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item" data-view="dashboard" data-owner-only="1"><span class="nav-ic">📊</span> แดชบอร์ด</div>
+      <div class="nav-item active" data-view="schedule"><span class="nav-ic">📆</span> ตารางการฝึกเด็ก<span id="pending-badge" style="display:none; margin-left:auto; background:var(--pink); color:white; font-size:11px; font-weight:bold; padding:2px 8px; border-radius:12px;">0</span></div>
+      <div class="nav-item" data-view="courses"><span class="nav-ic">📚</span> คอร์ส</div>
+      <div class="nav-item" data-view="members"><span class="nav-ic">👪</span> จัดการสมาชิก</div>
+      <div class="nav-item" data-view="staff" data-owner-only="1"><span class="nav-ic">👩‍⚕️</span> จัดการพนักงาน</div>
+</nav>
+    <div class="staff-card">
+      <div class="staff-name" id="staff-name">—</div>
+      <div class="staff-role" id="staff-role">—</div>
+      <div style="margin-top:8px"><a href="#" onclick="adminLogout();return false" style="color:#c9c2d0;font-size:11.5px;text-decoration:underline">ออกจากระบบ</a></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <!-- SCHEDULE -->
+    <div class="view active" id="view-schedule">
+      <div class="topbar">
+        <div>
+          <h1>ตารางการฝึกเด็ก</h1>
+        </div>
+        <div class="datenav">
+          <div class="viewtoggle">
+            <button id="vt-year" onclick="setCalView('year')">ปี</button>
+            <button id="vt-month" class="on" onclick="setCalView('month')">เดือน</button>
+            <button id="vt-day" onclick="setCalView('day')">วัน</button>
+          </div>
+          <button onclick="shiftPeriod(-1)" aria-label="ก่อนหน้า">‹</button>
+          <div class="datepick">
+            <span class="dp-ic">📅</span>
+            <span class="datelabel" id="date-label"></span>
+            <input type="date" id="date-input" onchange="pickDate(this.value)" aria-label="เลือกวันที่">
+          </div>
+          <button onclick="shiftPeriod(1)" aria-label="ถัดไป">›</button>
+          <button class="today-btn" onclick="goToday()">วันนี้</button>
+        </div>
+      </div>
+      <div class="content">
+        <!-- แถบปุ่มจัดการด้านบน (ปุ่มกลับ และ ประวัติการยกเลิก) -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 0 4px;">
+          <button id="cx-back-btn" class="btn btn-ghost" onclick="setCalView('month')" style="display: none; font-family: 'Sarabun', sans-serif; color: var(--ink-soft); font-weight: 600; padding: 8px 12px;">
+            <span style="font-size: 16px; margin-right: 4px;">←</span> กลับไปหน้าตารางปกติ
+          </button>
+
+          <button id="vt-cancelled" class="btn btn-danger" onclick="setCalView('cancelled')" style="font-family: 'Sarabun', sans-serif; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15); margin-left: auto;">
+            🗑 ประวัติการยกเลิกทั้งหมด
+          </button>
+        </div>
+
+        <div class="day-summary" id="day-summary"></div>
+        <div id="cal-mount"></div>
+        <div id="yr-mount"></div>
+        <div id="cx-mount"></div>
+        <div id="tt-mount"></div>
+        <div id="tt-extra-mount"></div>
+      </div>
+    </div>
+
+    <!-- PENDING BOOKINGS: dedicated view, reached from the summary card -->
+    <div class="view" id="view-pending">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:14px">
+          <button class="btn btn-ghost btn-sm" onclick="backToSchedule()">← กลับ</button>
+          <div><h1>คำขอจองคิว</h1><div class="sub">รายการรออนุมัติจากผู้ปกครอง</div></div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="pending-tabs">
+          <button class="ptab active" id="ptab-active" onclick="setPendingTab('active')">รออนุมัติ <span id="ptab-active-count" class="ptab-count">0</span></button>
+          <button class="ptab" id="ptab-archive" onclick="setPendingTab('archive')">ประวัติคำขอ</button>
+        </div>
+
+        <div class="panel action-panel" id="pending-active-panel">
+          <table>
+            <thead>
+              <tr>
+                <th id="pending-sort-btn" style="cursor:pointer; user-select:none; color:var(--pink);" title="คลิกเพื่อสลับการเรียงลำดับ">
+                  วันเวลาที่ขอ <span id="pending-sort-icon">↓</span>
+                </th>
+                <th>คอร์ส</th>
+                <th>เด็ก</th>
+                <th>ผู้ปกครอง / เบอร์</th>
+                <th style="text-align:right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="pending-rows"></tbody>
+          </table>
+        </div>
+
+        <div class="panel action-panel" id="pending-archive-panel" style="display:none">
+          <table>
+            <thead>
+              <tr>
+                <th>วันเวลาที่ขอ</th>
+                <th>คอร์ส</th>
+                <th>เด็ก</th>
+                <th>ผู้ปกครอง / เบอร์</th>
+                <th style="text-align:right">สถานะ</th>
+              </tr>
+            </thead>
+            <tbody id="pending-archive-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBERS (Children + Parents Tabs) -->
+    <div class="view" id="view-members">
+      <div class="topbar">
+        <div><h1 id="members-title">จัดการสมาชิก</h1><div class="sub" id="members-sub">บริหารจัดการข้อมูลเด็กและผู้ปกครองในระบบ</div></div>
+      </div>
+      <div class="content">
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+          <button class="tab-btn active" id="tab-btn-children" onclick="switchMemberTab('children')">👶 รายชื่อเด็ก (Active)</button>
+          <!-- ซ่อน Tab ผู้ปกครองไว้เฉพาะระดับ Owner ตามระบบเดิม -->
+          <button class="tab-btn" id="tab-btn-parents" data-owner-only="1" onclick="switchMemberTab('parents')">👨‍👩‍👧 ผู้ปกครอง</button>
+        </div>
+
+        <!-- Tab 1: Children -->
+        <div id="tab-children" class="tab-content active">
+          <!-- Action Bar: Search (Left) & Buttons (Right) -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap: wrap; gap: 10px;">
+            
+            <!-- ส่วนค้นหา (ซ้าย) -->
+            <div style="position:relative; width: 320px; max-width: 100%;">
+              <span style="position:absolute; left:12px; top:9px; color:var(--ink-soft); font-size: 14px;">🔍</span>
+              <input type="text" placeholder="ค้นหาชื่อเด็ก..." class="form-input" style="padding-left:36px; width:100%; border-radius:20px;" onkeyup="filterTable('children-rows', this.value)">
+            </div>
+
+            <!-- ส่วนปุ่มจัดการ (ขวา) -->
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" id="ch-archive-toggle" data-owner-only="1" onclick="toggleChildArchive()"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" style="vertical-align:-.15em;margin-right:.35em" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 15.9853L15.182 12.8033L14.1213 11.7427L12.75 13.114L12.75 5.25L11.25 5.25L11.25 13.114L9.8787 11.7427L8.81804 12.8033L12 15.9853ZM12 13.864L12 13.864L12.0001 13.864L12 13.864Z" fill="currentColor"/><path d="M18 17.25L18 18.75L6 18.75L6 17.25L18 17.25Z" fill="currentColor"/></svg>รายการเด็กที่ถูกจัดเก็บ
+              </button>
+              <button class="btn btn-primary" id="ch-add-btn" onclick="openChildForm()">+ เพิ่มเด็ก</button>
+            </div>
+          </div>
+
+          <div class="panel menu-host">
+            <table>
+              <thead><tr><th>ชื่อเด็ก</th><th>อายุ</th><th>ผู้ปกครอง</th><th>เบอร์ติดต่อ</th><th style="text-align:right">จัดการ</th></tr></thead>
+              <tbody id="children-rows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Parents -->
+        <div id="tab-parents" class="tab-content">
+          <!-- Action Bar: Search (Left) & Buttons (Right) -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap: wrap; gap: 10px;">
+            
+            <!-- ส่วนค้นหา (ซ้าย) -->
+            <div style="position:relative; width: 320px; max-width: 100%;">
+              <span style="position:absolute; left:12px; top:9px; color:var(--ink-soft); font-size: 14px;">🔍</span>
+              <input type="text" placeholder="ค้นหาชื่อผู้ปกครอง หรือเบอร์โทร..." class="form-input" style="padding-left:36px; width:100%; border-radius:20px;" onkeyup="filterTable('parents-rows', this.value)">
+            </div>
+
+            <!-- ส่วนปุ่มจัดการ (ขวา) -->
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" id="parent-archive-toggle" data-owner-only="1" onclick="toggleParentArchive()"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" style="vertical-align:-.15em;margin-right:.35em" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 15.9853L15.182 12.8033L14.1213 11.7427L12.75 13.114L12.75 5.25L11.25 5.25L11.25 13.114L9.8787 11.7427L8.81804 12.8033L12 15.9853ZM12 13.864L12 13.864L12.0001 13.864L12 13.864Z" fill="currentColor"/><path d="M18 17.25L18 18.75L6 18.75L6 17.25L18 17.25Z" fill="currentColor"/></svg>รายการบัญชีที่ถูกระงับ</button>
+              <button class="btn btn-primary" id="parent-add-btn" onclick="openParentForm()">+ เพิ่มผู้ปกครอง</button>
+            </div>
+          </div>
+
+          <div class="panel menu-host">
+            <table>
+              <thead><tr><th>ชื่อผู้ปกครอง</th><th>สถานะ</th><th>เบอร์ติดต่อ</th><th>ผู้ปกครองคนที่ 2</th><th>จำนวนเด็ก</th><th style="text-align:right">จัดการ</th></tr></thead>
+              <tbody id="parents-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div> 
+    </div>   
+
+    <!-- COURSES -->
+    <div class="view" id="view-courses">
+      <div class="topbar">
+        <div><h1 id="courses-title">คอร์สทั้งหมด</h1><div class="sub" id="courses-sub">โปรแกรมที่เปิดให้จอง</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost" id="archive-toggle" data-director-only="1" onclick="toggleArchiveView()"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" style="vertical-align:-.15em;margin-right:.35em" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 15.9853L15.182 12.8033L14.1213 11.7427L12.75 13.114L12.75 5.25L11.25 5.25L11.25 13.114L9.8787 11.7427L8.81804 12.8033L12 15.9853ZM12 13.864L12 13.864L12.0001 13.864L12 13.864Z" fill="currentColor"/><path d="M18 17.25L18 18.75L6 18.75L6 17.25L18 17.25Z" fill="currentColor"/></svg>คอร์สที่ถูกจัดเก็บ</button>
+          <button class="btn btn-primary" id="add-course-btn" data-owner-only="1" onclick="openCreateCourse()">+ เพิ่มคอร์ส</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="course-grid" id="course-grid"></div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD (owner only) -->
+    <div class="view" id="view-dashboard">
+      <div class="topbar">
+        <div><h1>แดชบอร์ด</h1><div class="sub">ภาพรวมคลินิก (เฉพาะเจ้าของ)</div></div>
+      </div>
+      <div class="content">
+        <div class="empty"><span class="ic">📊</span>แดชบอร์ดสรุปผล กำลังพัฒนา<br>จะแสดงรายได้ จำนวนนัด และสถิติการเข้าใช้บริการในขั้นถัดไป</div>
+      </div>
+    </div>
+
+    <!-- STAFF MANAGEMENT (owner only) -->
+    <div class="view" id="view-staff">
+      <div class="topbar">
+        <div><h1 id="staff-title">จัดการพนักงาน</h1><div class="sub" id="staff-sub">กำหนดบทบาทของพนักงานแต่ละคน</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost" id="staff-archive-toggle" data-owner-only="1" onclick="toggleStaffArchive()"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" style="vertical-align:-.15em;margin-right:.35em" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 15.9853L15.182 12.8033L14.1213 11.7427L12.75 13.114L12.75 5.25L11.25 5.25L11.25 13.114L9.8787 11.7427L8.81804 12.8033L12 15.9853ZM12 13.864L12 13.864L12.0001 13.864L12 13.864Z" fill="currentColor"/><path d="M18 17.25L18 18.75L6 18.75L6 17.25L18 17.25Z" fill="currentColor"/></svg>รายการบัญชีที่ถูกระงับ</button>
+          <button class="btn btn-primary" id="staff-add-btn" onclick="openCreateStaff()">+ เพิ่มพนักงาน</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="panel">
+          <table>
+            <thead><tr><th>ชื่อ</th><th>อีเมล</th><th>บทบาท</th><th style="text-align:right">จัดการ</th></tr></thead>
+            <tbody id="staff-rows"></tbody>
+          </table>
+        </div>
+        <div class="note-hint" style="margin-top:12px">พนักงานใหม่จะได้รับอีเมลพร้อมรหัสผ่านชั่วคราว และตั้งรหัสผ่านเองเมื่อเข้าสู่ระบบครั้งแรก</div>
+      </div>
+    </div>
+
+<!-- SESSION DETAIL MODAL -->
+<div class="overlay" id="detail-modal">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="closeDetail()">×</button>
+    <div class="modal-head">
+      <h2 id="sd-title">รายละเอียดคาบเรียน</h2>
+      <div class="who" id="sd-when"></div>
+    </div>
+    <div id="sd-body" style="margin-top:12px"></div>
+    <div class="modal-foot" id="sd-foot"></div>
+  </div>
+</div>
+
+<!-- CREATE SESSION MODAL -->
+<div class="overlay" id="create-modal">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="closeCreate()">×</button>
+    <div class="modal-head">
+      <h2>สร้างคาบเรียนใหม่</h2>
+      <div class="who" id="cr-when"></div>
+    </div>
+
+    <div class="form-block">
+      <label class="form-label">คอร์ส</label>
+      <select id="cr-course" onchange="onCreateCourseChange()"></select>
+      <div class="form-hint" id="cr-course-hint"></div>
+    </div>
+
+    <div class="form-block">
+      <label class="form-label">เด็ก</label>
+      <select id="cr-child"></select>
+      <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="openChildFromBooking()">+ เพิ่มเด็กใหม่</button>
+    </div>
+
+    <div class="form-block">
+      <label class="form-label">นักกิจกรรมบำบัด</label>
+      <div class="form-static" id="cr-therapist">ครูขนุน (ภาสินี ปุคคำ)</div>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeCreate()">ยกเลิก</button>
+      <button class="btn btn-primary" id="cr-save-btn" onclick="submitCreate()">สร้างคาบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE EMPLOYEE MODAL -->
+<div class="overlay" id="staff-create-modal">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeCreateStaff()">×</button>
+    <div class="modal-head">
+      <h2>เพิ่มพนักงานใหม่</h2>
+      <div class="who">ระบบจะส่งอีเมลเชิญพร้อมรหัสผ่านชั่วคราว</div>
+    </div>
+
+    <div class="form-block">
+      <label class="form-label">ชื่อ–นามสกุล</label>
+      <input type="text" id="ns-name" class="form-input" placeholder="เช่น ภาสินี ปุคคำ">
+    </div>
+
+    <div class="form-block">
+      <label class="form-label">อีเมล</label>
+      <input type="email" id="ns-email" class="form-input" placeholder="name@example.com">
+      <div class="form-hint">ใช้เป็นชื่อผู้ใช้สำหรับเข้าสู่ระบบ</div>
+    </div>
+
+    <div class="form-block">
+      <label class="form-label">บทบาท</label>
+      <select id="ns-role"></select>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeCreateStaff()">ยกเลิก</button>
+      <button class="btn btn-primary" id="ns-save-btn" onclick="submitCreateStaff()">สร้างบัญชี</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHILD FORM MODAL -->
+<div class="overlay" id="child-modal">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeChildForm()">×</button>
+    <div class="modal-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+      <div>
+        <h2 id="ch-title">ข้อมูลเด็ก</h2>
+        <div class="who" id="ch-sub"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="ch-edit-toggle" style="flex-shrink:0" onclick="enterChildEdit()">✏️ แก้ไข</button>
+    </div>
+
+    <!-- ============ VIEW MODE ============ -->
+    <div id="ch-view">
+      <div class="sect-head"><div class="sect-title">ข้อมูลพื้นฐาน</div></div>
+      <div class="view-grid">
+        <div class="view-item"><div class="k">ชื่อจริง</div><div class="vv" id="v-first"></div></div>
+        <div class="view-item"><div class="k">นามสกุล</div><div class="vv" id="v-last"></div></div>
+        <div class="view-item"><div class="k">ชื่อเล่น</div><div class="vv" id="v-nick"></div></div>
+        <div class="view-item"><div class="k">วันเกิด</div><div class="vv" id="v-dob"></div></div>
+        <div class="view-item"><div class="k">เพศ</div><div class="vv" id="v-gender"></div></div>
+        <div class="view-item"><div class="k">อายุ</div><div class="vv" id="v-age"></div></div>
+        <div class="view-item"><div class="k">ผู้ปกครอง</div><div class="vv" id="v-parent"></div></div>
+        <div class="view-item"><div class="k">เบอร์ติดต่อ</div><div class="vv" id="v-phone"></div></div>
+        <div class="view-item" id="v-parent2-wrap" style="grid-column-start:1"><div class="k">ผู้ปกครองคนที่ 2 (สำรอง)</div><div class="vv" id="v-parent2"></div></div>
+        <div class="view-item" id="v-parent2-phone-wrap"><div class="k">เบอร์ติดต่อคนที่ 2</div><div class="vv" id="v-parent2-phone"></div></div>
+        <div class="view-item span3"><div class="k">ข้อควรระวัง / แพ้ยา-อาหาร</div><div class="vv" id="v-alerts"></div></div>
+      </div>
+      <div class="sect-head">
+        <div class="sect-title">ข้อมูลทางคลินิก</div>
+        <div class="form-hint">สำหรับนักกิจกรรมบำบัด — ไม่แสดงให้ผู้ปกครองเห็น</div>
+      </div>
+      <div class="view-grid">
+        <div class="view-item span3"><div class="k">อาการ / ปัญหาหลักที่มาพบ</div><div class="vv" id="v-chief"></div></div>
+        <div class="view-item span3"><div class="k">การวินิจฉัยทางการแพทย์</div><div class="vv" id="v-diag"></div></div>
+        <div class="view-item span3"><div class="k">ประวัติการบำบัดที่ผ่านมา</div><div class="vv" id="v-prev"></div></div>
+        <div class="view-item span3"><div class="k">เป้าหมายการบำบัด</div><div class="vv" id="v-goals"></div></div>
+      </div>
+    </div>
+
+    <!-- ============ EDIT MODE ============ -->
+    <div id="ch-edit" style="display:none">
+      <div class="form-block" id="ch-parent-block">
+        <label class="form-label">ผู้ปกครอง</label>
+        <select id="ch-parent"></select>
+        <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="childAddParent()">+ ผู้ปกครองใหม่ (Walk-in)</button>
+        <div class="form-hint">เลือกผู้ปกครองที่มีอยู่ หรือกด “+ ผู้ปกครองใหม่” เพื่อเพิ่มผู้ปกครองรายใหม่ (เช่น ลูกค้า Walk-in)</div>
+      </div>
+
+      <div class="sect-head"><div class="sect-title">ข้อมูลพื้นฐาน</div></div>
+      <div class="form-grid">
+        <div class="form-block"><label class="form-label">ชื่อจริง</label>
+          <input type="text" id="ch-first-name" class="form-input" placeholder="เช่น เด็กชายรักดี"></div>
+        <div class="form-block"><label class="form-label">นามสกุล</label>
+          <input type="text" id="ch-last-name" class="form-input" placeholder="เช่น เรียนเก่ง"></div>
+        <div class="form-block"><label class="form-label">ชื่อเล่น</label>
+          <input type="text" id="ch-nickname" class="form-input" placeholder="เช่น โตโอ้"></div>
+        <div class="form-block"><label class="form-label">วันเกิด</label>
+          <input type="date" id="ch-dob" class="form-input"></div>
+        <div class="form-block"><label class="form-label">เพศ</label>
+          <select id="ch-gender" class="form-input">
+            <option value="">ไม่ระบุ</option><option value="ชาย">ชาย</option><option value="หญิง">หญิง</option>
+          </select></div>
+        <div class="form-block span2" id="ch-parentname-block"><label class="form-label">ชื่อผู้ปกครอง</label>
+          <input type="text" id="ch-parent-name" class="form-input" placeholder="เช่น สมชาย ใจดี">
+          <div class="form-hint">แก้ไขชื่อในระเบียนผู้ปกครอง — จะมีผลกับเด็กทุกคนของผู้ปกครองคนนี้</div></div>
+        <div class="form-block" id="ch-phone-block"><label class="form-label">เบอร์ติดต่อผู้ปกครอง</label>
+          <input type="tel" id="ch-phone" class="form-input" placeholder="เช่น 0812345678"></div>
+        <div class="form-block span2" id="ch-parent2-block"><label class="form-label">ชื่อผู้ปกครองคนที่ 2 (สำรอง)</label>
+          <input type="text" id="ch-parent2-name" class="form-input" placeholder="เช่น สมหญิง ใจดี">
+          <div class="form-hint">ผู้ปกครอง/ผู้ติดต่อสำรอง — เว้นว่างได้ · เป็นระเบียนร่วมของครอบครัว</div></div>
+        <div class="form-block" id="ch-parent2-phone-block"><label class="form-label">เบอร์ติดต่อคนที่ 2</label>
+          <input type="tel" id="ch-parent2-phone" class="form-input" placeholder="เช่น 0812345678"></div>
+        <div class="form-block span3"><label class="form-label">ข้อควรระวัง / แพ้ยา-อาหาร</label>
+          <textarea id="ch-medical-alerts" class="form-input" rows="2" placeholder="เช่น แพ้นมวัว, มีโรคประจำตัว"></textarea></div>
+      </div>
+
+      <div class="sect-head">
+        <div class="sect-title">ข้อมูลทางคลินิก</div>
+        <div class="form-hint">สำหรับนักกิจกรรมบำบัด — ไม่แสดงให้ผู้ปกครองเห็น · เว้นว่างเพื่อลบข้อมูลได้</div>
+      </div>
+      <div class="form-grid">
+        <div class="form-block span3"><label class="form-label">อาการ / ปัญหาหลักที่มาพบ</label>
+          <textarea id="ch-chief-concern" class="form-input" rows="2" placeholder="เช่น พูดช้า, ไม่สบตา"></textarea></div>
+        <div class="form-block span3"><label class="form-label">การวินิจฉัยทางการแพทย์</label>
+          <textarea id="ch-medical-diagnosis" class="form-input" rows="2" placeholder="เช่น ออทิสติก, พัฒนาการล่าช้า"></textarea></div>
+        <div class="form-block span3"><label class="form-label">ประวัติการบำบัดที่ผ่านมา</label>
+          <textarea id="ch-previous-therapy" class="form-input" rows="2" placeholder="เช่น เคยรับกิจกรรมบำบัดที่อื่น 6 เดือน"></textarea></div>
+        <div class="form-block span3"><label class="form-label">เป้าหมายการบำบัด</label>
+          <textarea id="ch-treatment-goals" class="form-input" rows="2" placeholder="เช่น เพิ่มสมาธิ, พัฒนากล้ามเนื้อมัดเล็ก"></textarea></div>
+      </div>
+    </div>
+
+    <div class="modal-foot" id="ch-view-foot">
+      <button class="btn btn-ghost" onclick="closeChildForm()">ปิด</button>
+      <button class="btn btn-primary" id="ch-view-edit-btn" onclick="enterChildEdit()">✏️ แก้ไขข้อมูล</button>
+    </div>
+    <div class="modal-foot" id="ch-edit-foot" style="display:none">
+      <button class="btn btn-ghost" onclick="cancelChildEdit()">ยกเลิก</button>
+      <button class="btn btn-primary" id="ch-save-btn" onclick="submitChildForm()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="parent-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeParentForm()">×</button>
+    <div class="modal-head">
+      <h2 id="parent-modal-title">เพิ่มผู้ปกครอง</h2>
+      <div class="who">ระเบียนผู้ปกครอง (ออฟไลน์ — ยังไม่ผูกกับ LINE)</div>
+    </div>
+
+    <!-- duplicate warning banner (hidden by default) -->
+    <div id="parent-dup-warn" style="display:none;background:var(--amber-bg,#FFF3CD);border:1px solid #F0E0B0;border-radius:12px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-weight:700;color:#856404;margin-bottom:6px">⚠️ อาจมีผู้ปกครองคนนี้อยู่แล้ว</div>
+      <div id="parent-dup-list" style="font-size:13.5px;color:#6b5a20"></div>
+    </div>
+
+    <div class="form-block">
+      <label class="form-label">ชื่อผู้ปกครอง</label>
+      <input type="text" id="pf-name" class="form-input" placeholder="เช่น สมชาย ใจดี">
+    </div>
+    <div class="form-block">
+      <label class="form-label">เบอร์ติดต่อ</label>
+      <input type="tel" id="pf-phone" class="form-input" placeholder="เช่น 0812345678">
+    </div>
+    <div class="form-block">
+      <label class="form-label">ชื่อผู้ปกครองคนที่ 2 (สำรอง)</label>
+      <input type="text" id="pf-parent2-name" class="form-input" placeholder="เช่น สมหญิง ใจดี">
+      <div class="form-hint">ผู้ติดต่อสำรอง — เว้นว่างได้</div>
+    </div>
+    <div class="form-block">
+      <label class="form-label">เบอร์ติดต่อคนที่ 2</label>
+      <input type="tel" id="pf-parent2-phone" class="form-input" placeholder="เช่น 0812345678">
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeParentForm()">ยกเลิก</button>
+      <button class="btn btn-primary" id="pf-save-btn" onclick="submitParentForm(false)">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE COURSE MODAL -->
+<div class="overlay" id="course-create-modal">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeCreateCourse()">×</button>
+    <div class="modal-head">
+      <h2>เพิ่มคอร์สใหม่</h2>
+      <div class="who">คอร์สจะแสดงให้ผู้ปกครองเห็นทันทีหลังสร้าง</div>
+    </div>
+
+    <div class="form-block">
+      <label class="form-label">ชื่อคอร์ส</label>
+      <input type="text" id="nc-name" class="form-input" placeholder="เช่น Sensory Integration">
+    </div>
+
+    <div class="form-block">
+      <label class="form-label">รายละเอียด</label>
+      <textarea id="nc-desc" class="form-input" style="min-height:78px;resize:vertical" placeholder="อธิบายสั้น ๆ ว่าคอร์สนี้ช่วยพัฒนาอะไร"></textarea>
+    </div>
+
+    <div class="form-block">
+      <label class="form-label">ประเภท</label>
+      <select id="nc-type" onchange="onCourseTypeChange()">
+        <option value="individual">เดี่ยว · 1 ชั่วโมง · 1 คน</option>
+        <option value="group">กลุ่ม · 2 ชั่วโมง · หลายคน</option>
+      </select>
+      <div class="form-hint" id="nc-type-hint"></div>
+    </div>
+
+    <div class="form-block" id="nc-capacity-block" style="display:none">
+      <label class="form-label">จำนวนที่รับ (คน)</label>
+      <input type="number" id="nc-capacity" class="form-input" value="4" min="2" max="12">
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <div class="form-block" style="flex:1">
+        <label class="form-label">อายุต่ำสุด (ปี)</label>
+        <input type="number" id="nc-minage" class="form-input" value="3" min="0" max="18">
+      </div>
+      <div class="form-block" style="flex:1">
+        <label class="form-label">อายุสูงสุด (ปี)</label>
+        <input type="number" id="nc-maxage" class="form-input" value="8" min="0" max="18">
+      </div>
+    </div>
+
+    <div class="form-block">
+      <label class="form-label">ราคา (บาท)</label>
+      <input type="number" id="nc-price" class="form-input" value="650" min="0" step="50">
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeCreateCourse()">ยกเลิก</button>
+      <button class="btn btn-primary" id="nc-save-btn" onclick="submitCreateCourse()">สร้างคอร์ส</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOG NOTE MODAL -->
+<div class="overlay" id="note-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeNote()">×</button>
+    <div class="modal-head">
+      <h2>บันทึกผลการเข้าเซสชัน</h2>
+      <div class="who" id="note-who"></div>
+    </div>
+
+    <div class="note-block staff">
+      <div class="label">บันทึกทางคลินิก <span class="tagpriv staff">🔒 เห็นเฉพาะเจ้าหน้าที่</span></div>
+      <textarea id="note-clinical" placeholder="เช่น ประเมิน fine motor, การทรงตัว, พฤติกรรม, แผนการรักษาต่อ..."></textarea>
+      <div class="note-hint">ข้อมูลนี้จะไม่ถูกส่งให้ผู้ปกครองเห็น ใช้สำหรับทีมงานเท่านั้น</div>
+    </div>
+
+    <div class="note-block parent">
+      <div class="label">สรุปสำหรับผู้ปกครอง <span class="tagpriv parent">👨‍👩‍👧 ผู้ปกครองเห็นได้</span></div>
+      <textarea id="note-parent" placeholder="เช่น วันนี้น้องตั้งใจดีมาก ฝึกหยิบจับสิ่งของได้ดีขึ้น แนะนำให้ฝึกที่บ้านโดย..."></textarea>
+      <div class="note-hint">ข้อความนี้จะแสดงในแอปของผู้ปกครองในหน้า “ความก้าวหน้า”</div>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeNote()">ยกเลิก</button>
+      <button class="btn btn-primary" id="note-save-btn" onclick="saveNote()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#app-root -->
+
+<div class="toast" id="toast"></div>
+
+<script src="admin/js/00-app-core.js"></script>
+<script src="admin/js/10-staff.js"></script>
+<script src="admin/js/20-schedule.js"></script>
+<script src="admin/js/30-modals.js"></script>
+<script src="admin/js/40-children.js"></script>
+<script src="admin/js/50-courses.js"></script>
+<script src="admin/js/60-parents.js"></script>
+<script src="admin/js/70-pending.js"></script>
+<script src="admin/js/99-main.js"></script>
+</body>
+</html>

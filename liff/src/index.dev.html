@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#FCF7F4">
+<title>My Kids Clinic — Parent App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<!-- ===== icon sprite: one definition, reused everywhere ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1.1 5.9-5.3-2.9-5.3 2.9 1.1-5.9L3.5 9.7l5.9-.8z"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 12a7.5 7.5 0 0 1-7.5 7.5H8l-4 2.5.9-3.6A7.5 7.5 0 1 1 20 12z"/><path d="M9 11.5h6M9 14.5h3.5"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11.2 12 4l8 7.2"/><path d="M6.2 10.5V19a1 1 0 0 0 1 1h9.6a1 1 0 0 0 1-1v-8.5"/><path d="M10 20v-5h4v5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16.5 6.4a3 3 0 0 1 0 5.9M17.5 14.9c2 .6 3.3 2.3 3.3 4.6"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="3"/><path d="M3 10h18M7 14.6h3"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.6"/><path d="M8.3 10.5V8a3.7 3.7 0 0 1 7.4 0v2.5"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9.5 5.5 16 12l-6.5 6.5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3.5v4M12 16.5v4M4.8 12h4M15.2 12h4M6.9 6.9l2.8 2.8M14.3 14.3l2.8 2.8M17.1 6.9l-2.8 2.8M9.7 14.3l-2.8 2.8"/></symbol>
+</svg>
+
+<div id="app">
+  <!-- ==================== SYSTEM SCREENS ==================== -->
+  <section class="screen active" id="s-loading">
+    <div class="spinner"></div>
+    <p style="margin-top:18px;color:var(--ink-soft);font-size:13.5px">กำลังเปิด My Kids Clinic</p>
+  </section>
+
+  <section class="screen" id="s-error">
+    <div style="width:70px;height:70px;border-radius:22px;background:var(--pink-soft);color:var(--pink-deep);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:18px"><svg class="ico"><use href="#i-lock"/></svg></div>
+    <h2 id="error-title" style="font-size:19px">กรุณาเปิดผ่านแอป LINE</h2>
+    <p id="error-desc" style="color:var(--ink-soft);font-size:13.5px;line-height:1.75;margin-top:8px;max-width:280px">แอปนี้ต้องเข้าสู่ระบบด้วยบัญชี LINE<br>กรุณาเปิดลิงก์ในแอป LINE</p>
+  </section>
+
+  <section class="screen" id="s-register" style="padding:0">
+    <div style="background:var(--pink-deep);color:#fff;padding:40px 24px 32px;text-align:center;border-radius:0 0 30px 30px;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 100% 0%,#E8637A 0%,transparent 62%),radial-gradient(90% 80% at -10% 110%,#93304A 0%,transparent 60%)"></div>
+      <div style="position:relative">
+        <h2 style="font-size:22px">ยินดีต้อนรับสู่ My Kids Clinic</h2>
+        <p style="opacity:.9;font-size:13.5px;margin-top:5px">กรอกข้อมูลเพื่อเริ่มต้นการดูแลบุตรหลาน</p>
+      </div>
+    </div>
+    <div style="padding:24px 20px 44px">
+      <div class="eyebrow" style="margin-top:0">ผู้ปกครอง</div>
+      <div class="form-group"><label>ชื่อผู้ปกครอง</label><input type="text" id="reg-parent-name" placeholder="เช่น สมชาย ใจดี"></div>
+      <div class="form-group"><label>เบอร์โทรศัพท์</label><input type="tel" id="reg-phone" placeholder="เช่น 0812345678"></div>
+      <div class="eyebrow">ข้อมูลเด็ก</div>
+      <div class="form-group"><label>ชื่อจริงเด็ก</label><input type="text" id="reg-first-name" placeholder="เช่น มาลี"></div>
+      <div class="form-group"><label>นามสกุลเด็ก</label><input type="text" id="reg-last-name" placeholder="เช่น ใจดี"></div>
+      <div class="form-group"><label>ชื่อเล่น</label><input type="text" id="reg-nickname" placeholder="เช่น น้องมาลี"></div>
+      <div class="form-group"><label>เพศ</label><select id="reg-gender"><option value="">ไม่ระบุ</option><option value="ชาย">ชาย</option><option value="หญิง">หญิง</option></select></div>
+      <div class="form-group"><label>วันเกิด</label><div class="dob-row"><select id="reg-dob-d"></select><select id="reg-dob-m"></select><select id="reg-dob-y"></select></div></div>
+      <div class="form-group"><label>โรคประจำตัว / แพ้อาหาร (ถ้ามี)</label><textarea id="reg-medical-alerts" rows="2" placeholder="เช่น แพ้นมวัว"></textarea></div>
+      <button class="btn-pink" id="reg-btn" onclick="submitRegistration()">ลงทะเบียน</button>
+    </div>
+  </section>
+
+  <!-- ==================== HOME ==================== -->
+  <section class="screen" id="s-home">
+    <div class="greet">
+      <div>
+        <div class="hi">สวัสดีค่ะ<b id="home-name">คุณผู้ปกครอง</b></div>
+      </div>
+      <div class="child-chip" onclick="document.getElementById('modal-select-child').classList.add('active')">
+        <div class="ava" id="active-child-avatar">-</div>
+        <div>
+          <div class="cn" id="active-child-name">กำลังโหลด…</div>
+          <div class="ca" id="active-child-age">แตะเพื่อสลับ</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="hero-container"></div>
+
+    <div class="eyebrow">นัดหมายล่าสุด</div>
+    <div class="card" style="padding:4px 12px" id="home-bookings">
+      <div style="padding:14px 4px"><div class="sk" style="height:14px;width:60%"></div><div class="sk" style="height:11px;width:38%;margin-top:8px"></div></div>
+    </div>
+
+    <div class="eyebrow">ความก้าวหน้าล่าสุด</div>
+    <div class="card" id="home-progress">
+      <div class="empty-state" style="padding:12px">นักกิจกรรมบำบัดยังไม่ได้บันทึก</div>
+    </div>
+  </section>
+
+  <!-- ==================== BOOK / COURSES ==================== -->
+  <section class="screen" id="s-book">
+    <div class="pagehead"><h1>จองคอร์ส</h1><p>เลือกกิจกรรมที่เหมาะกับน้อง</p></div>
+    <div id="courses-list"><div class="empty-state">กำลังโหลดคอร์ส…</div></div>
+  </section>
+
+  <!-- ==================== BOOKINGS ==================== -->
+  <section class="screen" id="s-bookings">
+    <div class="pagehead"><h1 id="bookings-title">นัดหมายของน้อง</h1><p>ทั้งหมดและสถานะปัจจุบัน</p></div>
+    <div class="eyebrow">กำลังจะมาถึง</div>
+    <div class="card" style="padding:4px 12px" id="bookings-upcoming"></div>
+    <div class="eyebrow">ที่ผ่านมา</div>
+    <div class="card" style="padding:4px 12px;opacity:.7" id="bookings-past"></div>
+  </section>
+
+  <!-- ==================== PROGRESS ==================== -->
+  <section class="screen" id="s-progress">
+    <div class="pagehead"><h1>ความก้าวหน้า</h1><p>บันทึกจากนักกิจกรรมบำบัด — แตะเพื่อดูรายละเอียด</p></div>
+    <div id="progress-list"><div class="empty-state">กำลังโหลดความก้าวหน้า…</div></div>
+  </section>
+
+  <!-- ==================== CHAT ==================== -->
+  <section class="screen" id="s-chat">
+    <div class="chat-hero">
+      <div class="art"><svg class="ico"><use href="#i-chat"/></svg></div>
+      <h2>แชทกับคลินิก</h2>
+      <p>สอบถาม จองคลาสกลุ่ม หรือเลื่อนนัด — ทีมงานตอบผ่าน LINE ได้เลยค่ะ</p>
+      <button class="chat-btn" onclick="openClinicChat('สวัสดีค่ะ ต้องการสอบถามข้อมูล')">เปิดแชทใน LINE</button>
+    </div>
+    <div class="faq">
+      <div class="eyebrow">คำถามที่พบบ่อย</div>
+      <div class="q" onclick="openClinicChat('สอบถามเรื่องการเลื่อนนัดหมายค่ะ')"><svg class="ico"><use href="#i-clock"/></svg> เลื่อนนัดหมายได้ไหม? <span><svg class="ico"><use href="#i-chev"/></svg></span></div>
+      <div class="q" onclick="openClinicChat('สนใจจองคลาสกลุ่มค่ะ')"><svg class="ico"><use href="#i-users"/></svg> จองคลาสกลุ่มอย่างไร? <span><svg class="ico"><use href="#i-chev"/></svg></span></div>
+      <div class="q" onclick="openClinicChat('สอบถามช่องทางการชำระเงินค่ะ')"><svg class="ico"><use href="#i-card"/></svg> ช่องทางการชำระเงิน <span><svg class="ico"><use href="#i-chev"/></svg></span></div>
+    </div>
+  </section>
+
+  <!-- ==================== BOOKING CALENDAR ==================== -->
+  <section class="screen" id="s-booking-cal">
+    <div class="pagehead" style="display:flex;align-items:center;gap:12px;padding-top:14px">
+      <button onclick="go('book')" style="width:38px;height:38px;border-radius:12px;border:1px solid var(--haze);background:var(--card);font-size:17px;cursor:pointer;color:var(--ink);flex-shrink:0;display:flex;align-items:center;justify-content:center"><svg class="ico"><use href="#i-back"/></svg></button>
+      <div><h1 style="font-size:21px;line-height:1.1">เลือกวันและเวลา</h1><p id="bcal-meta" style="margin:0"></p></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;padding:16px">
+      <h3 id="bcal-name" style="text-align:center;font-size:17px;margin-bottom:14px"></h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <button onclick="changeMonth(-1)" style="width:34px;height:34px;border-radius:10px;border:1px solid var(--haze);background:var(--card);color:var(--pink);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg class="ico" style="transform:rotate(180deg)"><use href="#i-chev"/></svg></button>
+        <div id="cal-month-label" style="font-family:'Baloo Thai 2';font-weight:700;font-size:15px"></div>
+        <button onclick="changeMonth(1)" style="width:34px;height:34px;border-radius:10px;border:1px solid var(--haze);background:var(--card);color:var(--pink);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg class="ico"><use href="#i-chev"/></svg></button>
+      </div>
+      <div id="cal-grid" class="cal-grid"></div>
+      <div id="slot-section" style="display:none;border-top:1px solid var(--haze);padding-top:14px;margin-top:14px">
+        <div id="slot-label" class="eyebrow" style="margin-top:0">เลือกเวลา</div>
+        <div id="slot-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:22px;text-align:center">
+      <div id="booking-summary" style="font-size:13px;color:var(--ink-soft);margin-bottom:10px">กรุณาเลือกวันที่ต้องการ</div>
+      <button class="btn-pink" id="confirm-book-btn" disabled onclick="confirmBooking()">ยืนยันการจอง</button>
+    </div>
+  </section>
+
+  <!-- ADD CHILD MODAL -->
+  <div class="modal-overlay" id="modal-add-child" onclick="if(event.target===this) this.classList.remove('active')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2 style="font-size:19px">เพิ่มเด็ก</h2>
+      <p style="color:var(--ink-soft);font-size:13px;margin-bottom:16px">กรอกข้อมูลเด็กที่ต้องการเพิ่ม</p>
+      <div class="form-group"><label>ชื่อจริงเด็ก</label><input type="text" id="add-first-name" placeholder="เช่น แก้ว"></div>
+      <div class="form-group"><label>นามสกุลเด็ก</label><input type="text" id="add-last-name" placeholder="เช่น ใจดี"></div>
+      <div class="form-group"><label>ชื่อเล่น</label><input type="text" id="add-nickname" placeholder="เช่น น้องแก้ว"></div>
+      <div class="form-group"><label>เพศ</label><select id="add-gender"><option value="">ไม่ระบุ</option><option value="ชาย">ชาย</option><option value="หญิง">หญิง</option></select></div>
+      <div class="form-group"><label>วันเกิด</label><div class="dob-row"><select id="add-dob-d"></select><select id="add-dob-m"></select><select id="add-dob-y"></select></div></div>
+      <div class="form-group"><label>แพ้ยา-อาหาร (ถ้ามี)</label><textarea id="add-medical-alerts" rows="2" placeholder="เช่น แพ้นมวัว"></textarea></div>
+      <button class="btn-pink" id="add-child-btn" onclick="submitAddChild()">เพิ่มเด็ก</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- ==================== BOTTOM NAV ==================== -->
+  <nav class="nav" id="bottom-nav" style="display:none">
+    <button class="tab" data-t="book" onclick="go('book')"><span class="i"><svg class="ico"><use href="#i-cal"/></svg></span>จอง</button>
+    <button class="tab" data-t="bookings" onclick="go('bookings')"><span class="i"><svg class="ico"><use href="#i-list"/></svg></span>นัดหมาย</button>
+    <button class="tab spacer"></button>
+    <button class="tab" data-t="progress" onclick="go('progress')"><span class="i"><svg class="ico"><use href="#i-star"/></svg></span>ก้าวหน้า</button>
+    <button class="tab" data-t="chat" onclick="go('chat')"><span class="i"><svg class="ico"><use href="#i-chat"/></svg></span>แชท</button>
+    <button class="home-btn on" data-t="home" onclick="go('home')"><svg class="ico"><use href="#i-home"/></svg></button>
+    <span class="home-cap">หน้าหลัก</span>
+  </nav>
+
+  <!-- BOOKING DETAIL MODAL -->
+  <div class="modal-overlay" id="modal-booking-detail" onclick="if(event.target===this) this.classList.remove('active')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div id="bd-status-tag" style="display:inline-block;font-family:'IBM Plex Sans Thai';font-weight:600;font-size:11.5px;padding:3px 10px;border-radius:100px;margin-bottom:12px"></div>
+      <h2 id="bd-course-name" style="font-size:21px;line-height:1.25;margin-bottom:3px">Course Name</h2>
+      <p id="bd-datetime" style="color:var(--ink-soft);font-size:14px">Date</p>
+
+      <div id="bd-progress-container" style="display:none;margin-top:18px;background:var(--sage-bg);border-radius:var(--r-lg);padding:16px;border:1px solid var(--sage-line)">
+         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--sage)">
+           <svg class="ico" style="font-size:17px"><use href="#i-star"/></svg>
+           <h4 style="font-size:14.5px;margin:0;color:var(--sage)">ผลการฝึกจากนักกิจกรรมบำบัด</h4>
+         </div>
+         <p id="bd-progress-text" style="font-size:13.5px;color:#1F6B5A;line-height:1.7;margin:0"></p>
+      </div>
+
+      <button class="btn-pink" onclick="document.getElementById('modal-booking-detail').classList.remove('active')" style="margin-top:24px;background:var(--haze);color:var(--ink);box-shadow:none">ปิดหน้าต่าง</button>
+    </div>
+  </div>
+</div>
+<!-- /#app -->
+
+<!-- SWITCH / ADD CHILD MODAL -->
+<div id="modal-select-child" class="modal-overlay" onclick="if(event.target===this) this.classList.remove('active')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom:16px;font-size:19px">สลับ/เพิ่มข้อมูลเด็ก</h3>
+    <div id="child-list-container" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"></div>
+    <button class="btn-pink" onclick="document.getElementById('modal-select-child').classList.remove('active'); document.getElementById('modal-add-child').classList.add('active');" style="background:var(--card);color:var(--pink);border:1.5px solid var(--pink);box-shadow:none">
+      + เพิ่มข้อมูลเด็กอีกคน
+    </button>
+  </div>
+</div>
+
+<!-- GROUP SESSIONS MODAL -->
+<div class="modal-overlay" id="modal-group-events" onclick="if(event.target===this) this.classList.remove('active')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="ge-title" style="font-size:21px;line-height:1.25">คลาสกลุ่ม</h2>
+    <p id="ge-sub" style="color:var(--ink-soft);font-size:13px;margin-top:3px"></p>
+    <div class="eyebrow" style="margin-top:18px">รอบที่เปิดรับสมัคร</div>
+    <div id="ge-body" style="margin-top:6px;max-height:52vh;overflow-y:auto"></div>
+    <button class="btn-pink" onclick="document.getElementById('modal-group-events').classList.remove('active')" style="margin-top:18px;background:var(--haze);color:var(--ink);box-shadow:none">ปิดหน้าต่าง</button>
+  </div>
+</div>
+
+<script src="./app.js"></script>
+</body>
+</html>

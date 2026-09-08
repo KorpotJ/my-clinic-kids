@@ -1,0 +1,324 @@
+/* ============================================================
+   My Kids Clinic — Parent app visual system
+   Display: Baloo Thai 2   Body: IBM Plex Sans Thai
+   ============================================================ */
+:root{
+  /* brand + clinical */
+  --pink:#E8637A; --pink-deep:#B8455C; --pink-soft:#FDEFF2; --pink-line:#F6DEE4;
+  --sage:#17836F; --sage-bg:#E3F2ED; --sage-line:#C8E5DC;
+  --amber:#A8722A; --amber-bg:#FBF0DC;
+  /* ground + ink */
+  --sand:#FCF7F4; --card:#FFFFFF; --haze:#F0E6EA;
+  --ink:#3B2430; --ink-soft:#8C7A83; --ink-faint:#BCACB4;
+  /* legacy aliases kept so existing markup keeps working */
+  --peach:#FDF1EC; --cream:#FCF7F4; --mint:#17836F; --mint-bg:#E3F2ED;
+  /* elevation — tight + wide pair, never a single blurry glow */
+  --lift:0 1px 2px rgba(59,36,48,.05), 0 8px 24px rgba(59,36,48,.06);
+  --lift-lg:0 2px 4px rgba(184,69,92,.06), 0 18px 40px rgba(184,69,92,.14);
+  --shadow:var(--lift-lg); --shadow-soft:var(--lift);
+  --r-sm:12px; --r-md:16px; --r-lg:22px; --r-xl:28px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+html,body{
+  height:100%;width:100%;overflow:hidden;position:fixed;
+  overscroll-behavior-y:none;-webkit-overflow-scrolling:auto;
+}
+body{
+  font-family:'IBM Plex Sans Thai','Sarabun',sans-serif;
+  color:var(--ink);background:#EDE2E6;
+  font-size:14px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Baloo Thai 2',sans-serif;font-weight:700;line-height:1.25;letter-spacing:-.01em}
+
+/* ---------- app frame ---------- */
+#app{
+  max-width:520px;height:100%;margin:0 auto;position:absolute;
+  top:0;left:0;right:0;bottom:0;overflow:hidden;background:var(--sand);
+  box-shadow:0 0 40px rgba(59,36,48,.10);
+}
+.screen{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  padding:14px 18px 124px;display:none;
+  overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
+}
+.screen.active{display:block;animation:screen-in .34s cubic-bezier(.22,.9,.3,1)}
+.screen::-webkit-scrollbar{width:0}
+@keyframes screen-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#s-loading.active,#s-error.active{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:28px}
+
+/* stagger children of the home screen on entry */
+#s-home.active > *{animation:rise .42s cubic-bezier(.22,.9,.3,1) backwards}
+#s-home.active > *:nth-child(1){animation-delay:.02s}
+#s-home.active > *:nth-child(2){animation-delay:.07s}
+#s-home.active > *:nth-child(3){animation-delay:.12s}
+#s-home.active > *:nth-child(4){animation-delay:.16s}
+#s-home.active > *:nth-child(5){animation-delay:.20s}
+#s-home.active > *:nth-child(6){animation-delay:.24s}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* ---------- icons ---------- */
+.ico{width:1em;height:1em;display:inline-block;vertical-align:-.13em;
+  fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- shared ---------- */
+.eyebrow{
+  font-family:'Baloo Thai 2';font-weight:600;font-size:11.5px;letter-spacing:.9px;
+  text-transform:uppercase;color:var(--ink-soft);margin:26px 2px 10px;
+  display:flex;align-items:center;gap:8px;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--haze)}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;
+  font-size:11.5px;font-weight:600;font-family:'IBM Plex Sans Thai';letter-spacing:.1px}
+.pill.ok{background:var(--sage-bg);color:var(--sage)}
+.pill.wait{background:var(--amber-bg);color:var(--amber)}
+.card{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--lift);
+  padding:14px 16px;border:1px solid rgba(59,36,48,.04)}
+.empty-state{text-align:center;padding:26px 16px;color:var(--ink-soft);font-size:13.5px}
+
+/* skeleton shimmer for loading */
+.sk{background:linear-gradient(90deg,var(--haze) 25%,#F8F0F3 50%,var(--haze) 75%);
+  background-size:300% 100%;animation:sk 1.3s ease-in-out infinite;border-radius:8px}
+@keyframes sk{0%{background-position:150% 0}100%{background-position:-50% 0}}
+
+/* ---------- HOME: greeting ---------- */
+.greet{display:flex;align-items:center;gap:12px;padding:12px 2px 2px}
+.hi{font-size:13px;color:var(--ink-soft);font-weight:500}
+.hi b{font-family:'Baloo Thai 2';font-weight:700;font-size:23px;color:var(--ink);
+  display:block;margin-top:-1px;letter-spacing:-.015em}
+.child-chip{margin-left:auto;display:flex;align-items:center;gap:9px;background:var(--card);
+  border:1px solid var(--haze);border-radius:100px;padding:4px 12px 4px 4px;
+  box-shadow:var(--lift);cursor:pointer;transition:transform .15s,box-shadow .15s}
+.child-chip:active{transform:scale(.97)}
+.child-chip .ava{width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(150deg,#F7A9BC,#E8637A);display:flex;align-items:center;
+  justify-content:center;font-size:14px;font-weight:700;font-family:'Baloo Thai 2';color:#fff;flex-shrink:0}
+.child-chip .cn{font-family:'Baloo Thai 2';font-weight:700;font-size:13px;line-height:1.15}
+.child-chip .ca{font-size:10.5px;color:var(--ink-soft);line-height:1.2}
+
+/* ---------- HOME: the one dominant object ---------- */
+.hero{
+  position:relative;margin-top:16px;border-radius:var(--r-xl);overflow:hidden;
+  background:var(--pink-deep);color:#fff;padding:20px 20px 18px;box-shadow:var(--lift-lg);
+}
+/* a quiet, non-generic ground: two soft radial washes, no floating circles */
+.hero::before{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(120% 90% at 100% 0%, #E8637A 0%, transparent 62%),
+    radial-gradient(90% 80% at -10% 110%, #93304A 0%, transparent 60%);
+}
+.hero > *{position:relative}
+.hero .blob{display:none}          /* legacy markup: neutralised */
+.hero .lbl{font-family:'IBM Plex Sans Thai';font-weight:500;font-size:12px;
+  letter-spacing:.5px;text-transform:uppercase;opacity:.82;display:flex;align-items:center;gap:6px}
+.hero .cn{font-family:'Baloo Thai 2';font-weight:700;font-size:24px;margin:7px 0 2px;letter-spacing:-.015em}
+.hero .dt{font-size:14px;opacity:.94;font-weight:400}
+.hero .foot{display:flex;align-items:center;gap:9px;margin-top:16px}
+.hero .countdown{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.22);
+  border-radius:100px;padding:5px 13px;font-family:'IBM Plex Sans Thai';font-weight:600;font-size:12px}
+.hero .go{margin-left:auto;background:#fff;color:var(--pink-deep);border:none;border-radius:100px;
+  padding:9px 17px;font-family:'Baloo Thai 2';font-weight:700;font-size:13px;cursor:pointer;
+  transition:transform .14s}
+.hero .go:active{transform:scale(.95)}
+
+/* ---------- SIGNATURE: session path (สมุดสะสมดาว) ---------- */
+.path{margin-top:18px;padding-top:15px;border-top:1px solid rgba(255,255,255,.18)}
+.path-head{display:flex;align-items:baseline;gap:7px;margin-bottom:11px}
+.path-head .n{font-family:'Baloo Thai 2';font-weight:700;font-size:15px}
+.path-head .l{font-size:11.5px;opacity:.8;letter-spacing:.3px}
+.beads{display:flex;align-items:center;gap:0;overflow:hidden}
+.bead{width:15px;height:15px;border-radius:50%;flex-shrink:0;position:relative}
+.bead.done{background:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.3)}
+.bead.next{background:transparent;border:2.5px solid #fff;animation:pulse 2.1s ease-in-out infinite}
+.bead.todo{background:rgba(255,255,255,.26)}
+.bead-link{flex:1;height:2px;background:rgba(255,255,255,.3);min-width:6px}
+.bead-link.dim{background:rgba(255,255,255,.16)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.5)}50%{box-shadow:0 0 0 6px rgba(255,255,255,0)}}
+@media (prefers-reduced-motion:reduce){
+  .bead.next{animation:none}
+  .screen.active,#s-home.active > *{animation:none}
+}
+
+/* ---------- list rows (bookings) ---------- */
+.booking{display:flex;align-items:center;gap:12px;padding:12px 4px;
+  border-bottom:1px solid var(--haze);cursor:pointer}
+.booking:last-child{border-bottom:none}
+.booking .ic{width:40px;height:40px;border-radius:13px;background:var(--pink-soft);color:var(--pink-deep);
+  display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.booking .bn{font-family:'Baloo Thai 2';font-weight:600;font-size:14.5px;line-height:1.3}
+.booking .bd{font-size:12px;color:var(--ink-soft);margin-top:1px}
+.booking .st{margin-left:auto;flex-shrink:0}
+
+/* ---------- page heads ---------- */
+.pagehead{padding:18px 2px 2px}
+.pagehead h1{font-size:26px;letter-spacing:-.02em}
+.pagehead p{color:var(--ink-soft);font-size:13px;margin-top:3px}
+
+/* ---------- COURSES ---------- */
+.course{margin-top:13px;border-radius:var(--r-lg);background:var(--card);box-shadow:var(--lift);
+  overflow:hidden;border:1px solid rgba(59,36,48,.05)}
+.course .top{padding:16px 17px 2px}
+.course .tag{display:inline-block;background:var(--sage-bg);color:var(--sage);
+  font-family:'IBM Plex Sans Thai';font-weight:600;font-size:11px;letter-spacing:.4px;
+  padding:3px 9px;border-radius:7px;margin-bottom:9px;text-transform:uppercase}
+.course h3{font-size:17.5px}
+.course .desc{color:var(--ink-soft);font-size:13px;line-height:1.6;margin-top:5px}
+.course .meta{display:flex;align-items:center;gap:14px;padding:11px 17px;
+  border-top:1px solid var(--haze);margin-top:13px;font-size:12.5px;color:var(--ink-soft);font-weight:500}
+.course .meta .price{margin-left:auto;font-family:'Baloo Thai 2';font-weight:700;font-size:17px;color:var(--ink)}
+.course .book{display:block;width:calc(100% - 34px);margin:0 17px 16px;border:none;cursor:pointer;
+  background:var(--pink);color:#fff;font-family:'Baloo Thai 2';font-weight:700;font-size:14.5px;
+  padding:12px;border-radius:var(--r-sm);box-shadow:0 6px 16px rgba(232,99,122,.26);transition:transform .14s}
+.course .book:active{transform:scale(.985)}
+
+/* ---------- PROGRESS accordion ---------- */
+.pcard{margin-top:11px;background:var(--card);border-radius:var(--r-lg);border:1px solid rgba(59,36,48,.05);
+  box-shadow:var(--lift);overflow:hidden;cursor:pointer;transition:box-shadow .22s,border-color .22s}
+.pcard.open{border-color:var(--sage-line);box-shadow:var(--lift-lg)}
+.pcard .ph{display:flex;align-items:center;gap:12px;padding:14px 15px}
+.pcard .pic{width:42px;height:42px;border-radius:13px;background:var(--sage-bg);color:var(--sage);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.pcard .pt{font-family:'Baloo Thai 2';font-weight:600;font-size:14.5px;line-height:1.3}
+.pcard .pd{font-size:11.5px;color:var(--ink-soft);margin-top:1px}
+.pcard .chev{margin-left:auto;flex-shrink:0;color:var(--ink-faint);font-size:14px;
+  width:25px;height:25px;border-radius:50%;background:var(--sand);display:flex;align-items:center;
+  justify-content:center;transition:transform .3s cubic-bezier(.22,.9,.3,1),background .2s,color .2s}
+.pcard.open .chev{transform:rotate(90deg);background:var(--sage);color:#fff}
+.pcard .pbody{max-height:0;overflow:hidden;transition:max-height .34s cubic-bezier(.22,.9,.3,1)}
+.pcard.open .pbody{max-height:420px}
+.pcard .pbody .inner{padding:0 16px 16px 69px}
+.pcard .pbody p{font-size:13.5px;color:#5F5058;line-height:1.7}
+.pcard .tags{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+.pcard .tg{font-family:'IBM Plex Sans Thai';font-weight:600;font-size:11px;padding:3px 9px;
+  border-radius:7px;background:var(--sage-bg);color:var(--sage)}
+.pcard .tg.b{background:#E9EDF8;color:#3F5E9E}
+
+/* ---------- CHAT ---------- */
+.chat-hero{margin-top:34px;text-align:center;padding:0 8px}
+.chat-hero .art{width:88px;height:88px;margin:0 auto 18px;border-radius:26px;
+  background:var(--pink-soft);color:var(--pink);display:flex;align-items:center;
+  justify-content:center;font-size:38px;box-shadow:var(--lift)}
+.chat-hero h2{font-size:21px}
+.chat-hero p{color:var(--ink-soft);font-size:13.5px;line-height:1.7;margin:8px 16px 0}
+.chat-btn{display:flex;align-items:center;justify-content:center;gap:9px;
+  width:calc(100% - 12px);margin:22px 6px 0;background:#06C755;color:#fff;border:none;
+  border-radius:var(--r-md);padding:15px;cursor:pointer;font-family:'Baloo Thai 2';
+  font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(6,199,85,.26);transition:transform .14s}
+.chat-btn:active{transform:scale(.985)}
+.faq{margin-top:26px}
+.faq .q{background:var(--card);border:1px solid var(--haze);border-radius:var(--r-md);
+  padding:13px 15px;margin-top:9px;font-size:13.5px;font-weight:500;display:flex;
+  align-items:center;gap:11px;cursor:pointer;color:var(--ink);transition:border-color .16s}
+.faq .q:active{border-color:var(--pink-line)}
+.faq .q span{margin-left:auto;color:var(--ink-faint)}
+.faq .q .ico{color:var(--pink);font-size:17px;flex-shrink:0}
+
+/* ---------- bottom nav ---------- */
+.nav{position:fixed;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;height:78px;
+  background:rgba(252,247,244,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--haze);display:flex;align-items:flex-start;padding-top:12px;z-index:40}
+.tab{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;gap:5px;color:var(--ink-faint);font-family:'IBM Plex Sans Thai';
+  font-weight:500;font-size:10.5px;transition:color .18s}
+.tab .i{font-size:21px;line-height:1;display:flex;transition:transform .18s}
+.tab.on{color:var(--pink-deep);font-weight:600}
+.tab.on .i{transform:translateY(-2px)}
+.tab.spacer{pointer-events:none}
+.home-btn{position:absolute;left:50%;top:-23px;transform:translateX(-50%);
+  width:62px;height:62px;border-radius:50%;border:5px solid var(--sand);cursor:pointer;
+  background:var(--pink);box-shadow:0 8px 20px rgba(232,99,122,.40);display:flex;
+  align-items:center;justify-content:center;color:#fff;font-size:24px;transition:transform .16s}
+.home-btn:active{transform:translateX(-50%) scale(.93)}
+.home-btn.on{background:var(--pink-deep);box-shadow:0 10px 26px rgba(184,69,92,.48)}
+.home-cap{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
+  font-family:'IBM Plex Sans Thai';font-weight:600;font-size:10.5px;color:var(--pink-deep);opacity:0;
+  transition:opacity .2s}
+.home-btn.on ~ .home-cap{opacity:1}
+.tab:focus,.home-btn:focus,.book:focus,.chat-btn:focus,.q:focus{outline:none}
+.tab:focus-visible,.home-btn:focus-visible,.book:focus-visible,.chat-btn:focus-visible{
+  outline:2px solid var(--pink);outline-offset:3px;border-radius:12px}
+
+/* ---------- CALENDAR / SLOTS ---------- */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{text-align:center;font-size:10.5px;color:var(--ink-faint);font-weight:600;
+  padding:4px 0;letter-spacing:.4px}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:11px;
+  font-size:13.5px;font-weight:500;color:var(--ink-faint);transition:transform .12s}
+.cal-day.avail{background:var(--pink-soft);color:var(--pink-deep);cursor:pointer;font-weight:600}
+.cal-day.avail:active{transform:scale(.9)}
+.cal-day.today{box-shadow:inset 0 0 0 1.8px var(--pink)}
+.cal-day.selected{background:var(--pink);color:#fff;font-weight:700}
+.cal-day.past,.cal-day.empty{color:var(--ink-faint);opacity:.4}
+.slot{background:var(--card);border:1.5px solid var(--haze);border-radius:var(--r-sm);
+  padding:11px;text-align:center;cursor:pointer;transition:border-color .16s,transform .12s}
+.slot:active{transform:scale(.97)}
+.slot .slot-time{font-family:'Baloo Thai 2';font-weight:700;font-size:15px;display:block}
+.slot .slot-sub{font-size:11px;color:var(--sage);font-weight:500}
+.slot.selected{border-color:var(--pink);background:var(--pink-soft)}
+.slot.full{opacity:.5;pointer-events:none;background:var(--sand)}
+.slot.full .slot-sub{color:var(--ink-soft)}
+.slot.group{border-color:#E4C58A;background:#FDF7EA}
+.slot.group .slot-sub{color:var(--amber)}
+
+/* ---------- system + forms ---------- */
+.spinner{width:34px;height:34px;border:3px solid var(--pink-soft);border-top-color:var(--pink);
+  border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.form-group{margin-bottom:14px}
+.dob-row{display:grid;grid-template-columns:1fr 1.5fr 1.1fr;gap:8px}
+.form-group label{display:block;font-family:'IBM Plex Sans Thai';font-weight:600;
+  font-size:12.5px;margin-bottom:6px;color:var(--ink-soft)}
+.form-group input,.form-group select,.form-group textarea{width:100%;border:1.5px solid var(--haze);
+  border-radius:var(--r-sm);padding:12px 14px;font-family:'IBM Plex Sans Thai';font-size:14.5px;
+  background:var(--card);color:var(--ink);transition:border-color .16s}
+.form-group input::placeholder,.form-group textarea::placeholder{color:var(--ink-faint)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{
+  border-color:var(--pink);outline:none}
+.btn-pink{width:100%;background:var(--pink);color:#fff;border:none;border-radius:var(--r-md);
+  padding:14px;font-family:'Baloo Thai 2';font-weight:700;font-size:15.5px;cursor:pointer;
+  box-shadow:0 8px 20px rgba(232,99,122,.26);transition:transform .14s}
+.btn-pink:active{transform:scale(.985)}
+.btn-pink:disabled{opacity:.5;box-shadow:none}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(45,22,32,.45);z-index:60;display:none;
+  align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
+.modal-overlay.active{display:flex;animation:fadein .2s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.modal{background:var(--card);width:100%;max-width:520px;border-radius:var(--r-xl) var(--r-xl) 0 0;
+  padding:18px 20px 34px;max-height:88%;overflow-y:auto;
+  animation:slideup .32s cubic-bezier(.22,.9,.3,1)}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+.modal-handle{width:36px;height:4px;background:var(--haze);border-radius:100px;margin:0 auto 16px}
+
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(16px);
+  background:var(--ink);color:#fff;padding:11px 20px;border-radius:100px;font-size:13.5px;
+  font-weight:500;z-index:80;opacity:0;transition:.28s cubic-bezier(.22,.9,.3,1);
+  pointer-events:none;width:max-content;max-width:88%;text-align:center;
+  box-shadow:0 10px 30px rgba(59,36,48,.28)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- group class tabs + events ---------- */
+.ctabs{display:flex;gap:7px;margin:16px 0 2px;background:var(--haze);padding:4px;border-radius:14px}
+.ctab{flex:1;padding:10px;border-radius:10px;border:none;background:transparent;cursor:pointer;
+  font-family:'IBM Plex Sans Thai';font-weight:600;font-size:13.5px;color:var(--ink-soft);
+  transition:background .18s,color .18s}
+.ctab.on{background:var(--card);color:var(--pink-deep);box-shadow:var(--lift)}
+.badge-group{display:inline-block;background:var(--amber-bg);color:var(--amber);
+  font-family:'IBM Plex Sans Thai';font-weight:600;font-size:10.5px;padding:2px 8px;
+  border-radius:7px;vertical-align:middle;margin-left:5px}
+.gevent{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--haze);
+  border-radius:var(--r-md);padding:12px 14px;margin-bottom:9px}
+.gevent.full{background:var(--sand)}
+.ge-when{flex:1;min-width:0}
+.ge-date{font-family:'Baloo Thai 2';font-weight:600;font-size:14px;color:var(--ink)}
+.ge-who{font-size:11.5px;color:var(--ink-soft);margin-top:2px}
+.ge-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.occ{font-family:'IBM Plex Sans Thai';font-weight:600;font-size:11.5px;color:var(--sage);white-space:nowrap}
+.occ.full{color:var(--ink-soft)}
+.gjoin{border:none;cursor:pointer;font-family:'Baloo Thai 2';font-weight:700;font-size:13px;
+  padding:8px 16px;border-radius:10px;background:var(--pink);color:#fff}
+.gjoin:disabled{background:var(--haze);color:var(--ink-faint);cursor:default}
+.ge-empty{text-align:center;padding:22px 8px}
