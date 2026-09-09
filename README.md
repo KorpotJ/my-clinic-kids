@@ -34,13 +34,15 @@ Status: feature-complete for its original scope and running with 8 demo cases. N
 
 It began as an AWS lab. I wanted a project large enough to force real decisions about VPC design, identity and cost, instead of another tutorial stack that never has to survive contact with anything.
 
-The subject came from my partner, an occupational therapist training at a children's clinic that had recently opened. A booking layer between parents and the clinic looked like an obvious fit — parents were asking about slots over LINE, staff were checking a paper book.
+The idea came from my partner, who joined a newly opened children's clinic as an occupational therapist. Almost every parent here already lives inside LINE, so a booking flow that opens straight from the clinic's LINE official account looked like the path of least friction — nothing to install, nobody to onboard. Building it as a real product rather than a lab exercise was the point: that is how I wanted to learn AWS.
 
-When the system was working, I approached the clinic and showed it to them. **Their answer was the most useful thing the project produced:** their courses are locked to fixed weekdays and each child repeats the same programme, so there is nothing for a parent to choose. A booking intermediary solves a problem they do not have.
+When the system was working, I approached the clinic and showed it to them. **Their answer is where the project stopped.** Their courses lock each child into a fixed programme of activities, so there is nothing for a parent to select and no gap for online booking to fill. That ended it.
 
-Running it cost roughly 1,100 THB a month. With no problem to justify that, I stopped and decommissioned the paid parts.
+The booking flow itself still holds up as a pattern — just not for this clinic. Somewhere with genuinely open slots, a dental practice or a restaurant, is where this design would earn its keep, and it is a reasonable thing to build on later.
 
-I still think the system is worth building on — the schedule, progress notes and staff console all stand on their own, and the part that missed was specifically the booking flow. But building it further without a user asking for it would be the same mistake in a longer form.
+Running it cost roughly 1,100 THB a month. I have taken it as far as it needed to go, and I would rather put that time into preparing for AWS certification next.
+
+I enjoyed this more than I expected to. It never made money, but what I learned here is the part that transfers — and applying it somewhere with a real commercial need is the more likely way it eventually pays off.
 
 ### How it was built
 
@@ -174,7 +176,7 @@ Restoring the system is a matter of restoring a snapshot and recreating one VPC 
 lambda/       13 functions, one folder each
 liff/         parent-facing LINE app
 admin/        staff console
-migrations/   7 migrations, each with a rollback
-docs/         architecture, decisions, security findings, schema
+migrations/   4 migrations, 2 of them with a rollback
+docs/         architecture, decisions, security findings
 media/        screenshots and clips
 ```
