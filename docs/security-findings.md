@@ -46,7 +46,9 @@ The timestamps make the cause obvious. The key was created at 09:33 and the CSV 
 
 **Why it is worse than finding 2.** Root credentials cannot be scoped by IAM policy, restricted by a service control policy, or bounded by a permission boundary. There is no configuration that limits what they can do.
 
-**Fixed.** The local profile now uses a scoped IAM user. The root access key was deleted on 9 September 2026, after CloudTrail confirmed its last use was a single read-only `GetCallerIdentity` call from my own address — nothing was depending on it. `get-account-summary` now returns `0 1`: no root keys, MFA still enforced. The stale local profile pointing at the deleted key was removed as well.
+**Fixed.** The local profile now uses a scoped IAM user. The root access key was deleted on 9 September 2026. Before deleting it I checked what depended on it: CloudTrail showed a single read-only `GetCallerIdentity` call as its last use, and the local profile that referenced it had been pointing at an already-deleted key for months. `get-account-summary` now returns `0 1` — no root keys, MFA still enforced.
+
+**What it cost.** One thing did depend on those keys. The bucket from finding 2 has MFA Delete enabled, and disabling MFA Delete is an operation only root credentials can perform — a console session is not enough, as S3 rejects the request when session tokens are present. Deleting the key therefore locked the bucket's remaining versions in place. That was the trade I chose: the bucket holds three versions of throwaway test data and costs almost nothing to keep, while a live root key on a personal machine is a standing risk with no ceiling on what it can do. Reversing it is possible at any time by issuing a new root key, so nothing here is permanent except the risk that was removed.
 
 ---
 
