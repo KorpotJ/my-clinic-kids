@@ -46,7 +46,7 @@ The timestamps make the cause obvious. The key was created at 09:33 and the CSV 
 
 **Why it is worse than finding 2.** Root credentials cannot be scoped by IAM policy, restricted by a service control policy, or bounded by a permission boundary. There is no configuration that limits what they can do.
 
-**Fixed.** The local profile now uses a scoped IAM user. Deleting the root keys requires a root console session and is tracked as remaining work.
+**Fixed.** The local profile now uses a scoped IAM user. The root access key was deleted on 9 September 2026, after CloudTrail confirmed its last use was a single read-only `GetCallerIdentity` call from my own address — nothing was depending on it. `get-account-summary` now returns `0 1`: no root keys, MFA still enforced. The stale local profile pointing at the deleted key was removed as well.
 
 ---
 
