@@ -164,9 +164,9 @@ Honest list, all confirmed by inspection rather than guessed:
 
 Stopped after reaching feature completeness, for the reasons above.
 
-To stop it costing money, the RDS instance and the Secrets Manager VPC endpoint were deleted; the database is preserved as five manual snapshots, including one taken immediately before deletion. Everything else — Lambda, API Gateway, Cognito, CloudFront, S3 — costs effectively nothing and remains deployed, so the interfaces are still browsable even though data no longer loads.
+To stop it costing money, the RDS instance and the Secrets Manager VPC endpoint were deleted; the database is preserved as five manual snapshots, including one taken immediately before deletion. Lambda, API Gateway and Cognito cost effectively nothing and remain deployed.
 
-Restoring the system is a matter of restoring a snapshot and recreating one VPC endpoint.
+The staff console was served from CloudFront and stayed browsable after the database was removed. It was disabled on 10 September 2026: with no backend behind it, an admin page reachable from the public internet was a liability with no upside. The distribution was disabled rather than deleted, so the S3 origin and the domain are untouched and it can be re-enabled in one click. Restoring the full system is a matter of restoring a snapshot and recreating one VPC endpoint.
 
 ---
 
