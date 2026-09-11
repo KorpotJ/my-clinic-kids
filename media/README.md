@@ -1,7 +1,9 @@
 # Media index
 
 Screenshots and screen recordings of the running system, captured before decommissioning.
-All 8 cases visible in these files are demo data. No real patient information was ever entered.
+All data in these screenshots is seeded demo data from `seed-demo.sql`, loaded into
+a throwaway database. No real patient or guardian information was ever entered.
+The phone numbers run in sequence (0800000001-0800000008), which makes this visible at a glance.
 
 **Naming:** `2.x` = staff web console · `3.x` = parent LINE LIFF app.
 Numbers follow the order a user meets each screen, not the order they were captured.
@@ -9,9 +11,6 @@ Numbers follow the order a user meets each screen, not the order they were captu
 Three flows exist as both a still and a clip — the still is used in the main README, the clip
 shows the interaction: `3.4 ↔ 3.10` (solo booking) · `3.5 ↔ 3.11` (group booking) ·
 `3.8 ↔ 3.12` (progress notes).
-
-> **สำหรับผู้อ่านภาษาไทย:** `2.x` คือฝั่งเจ้าหน้าที่ · `3.x` คือฝั่งผู้ปกครอง
-> เรียงตามลำดับที่ผู้ใช้เจอหน้าจอ ไฟล์ `.mp4` คือคลิป ที่เหลือเป็นภาพนิ่ง
 
 ---
 
