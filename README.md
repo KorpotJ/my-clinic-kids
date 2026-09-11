@@ -46,9 +46,7 @@ I enjoyed this more than I expected to. It never made money, but what I learned 
 
 ### How it was built
 
-I used AI as the driver for most of the implementation and worked largely as an orchestrator: setting the architecture, splitting work into pieces, checking each result against the running system, and discarding what did not hold up. I do not claim to understand every line of the codebase.
-
-What I do claim is the verification discipline around it. **Every number in this README was measured from the live system** — line counts, route counts, constraint definitions, costs, group membership — not recalled or estimated. The [Known issues](#known-issues) section is the output of that same process: each entry was found by checking the running system against what the documentation claimed, and several contradict what I believed was true.
+This project was built almost entirely with AI — planning and design through conversations with Claude, and the actual code written by Claude Code on my machine. What I did myself was design the app screens, lay out the system, and decide what went in and what stayed out. I started from a goal I set for myself: build something real on AWS, with LINE as the way parents actually reach it. From there I split the work into pieces and had AI build them one at a time.
 
 ---
 
@@ -164,9 +162,9 @@ Honest list, all confirmed by inspection rather than guessed:
 
 Stopped after reaching feature completeness, for the reasons above.
 
-To stop it costing money, the RDS instance and the Secrets Manager VPC endpoint were deleted; the database is preserved as five manual snapshots, including one taken immediately before deletion. Lambda, API Gateway and Cognito cost effectively nothing and remain deployed.
+To stop it costing money I deleted the RDS instance and the Secrets Manager VPC endpoint. The database is kept as five manual snapshots, one of them taken just before deletion. Lambda, API Gateway and Cognito cost almost nothing, so they are still deployed.
 
-The staff console was served from CloudFront and stayed browsable after the database was removed. It was disabled on 10 September 2026: with no backend behind it, an admin page reachable from the public internet was a liability with no upside. The distribution was disabled rather than deleted, so the S3 origin and the domain are untouched and it can be re-enabled in one click. Restoring the full system is a matter of restoring a snapshot and recreating one VPC endpoint.
+The staff console ran on CloudFront and stayed reachable after the database was gone. I turned it off on 10 September 2026. There was nothing behind it any more, and I did not want an admin page sitting open on the internet for no reason. I disabled the distribution instead of deleting it, so the S3 bucket and the domain are unchanged and I can switch it back on if I need to. Bringing the whole thing back means restoring a snapshot and recreating one VPC endpoint.
 
 ---
 
